@@ -23,12 +23,12 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 <div id="hud"><span id="biome">草原</span><span>🌳 <i id="nt">0</i></span><span>🌸 <i id="nf">0</i></span><span>😊 <i id="nh">0</i><i id="np" hidden>0</i></span><span>💴 <i id="nm">0</i></span></div>
 <div id="bar">
 <button data-k="space">⤴ ジャンプ</button><button id="fly">🕊 飛ぶ</button><button id="dash">⚡ ダッシュ</button>
-<button data-k="1">🌳 木</button><button data-k="2">🌸 花</button><button data-k="3">💰 お金</button><button data-k="4">🍙 ごはん</button><button id="auto">✨ おまかせ</button></div>
+<button data-k="1">🌳 木</button><button data-k="2">🌸 花</button><button data-k="3">💰 お金</button><button data-k="4">🍙 ごはん</button><button id="auto">✨ おまかせ</button><button id="sunf">🌻 ひまわり畑</button><button id="ppl">👥 人を呼ぶ</button><button id="mus" class="on">🎵 音楽</button></div>
 <div id="start"><div><h1>🌈 ハッピー・スカイラン</h1>
 走って、飛んで、世界をハッピーに。<br>草原・山・農村・都会が広がっています。<br>
 <b>移動</b> WASD/矢印　<b>ダッシュ</b> Shift　<b>視点</b> ドラッグ<br>
 <b>ジャンプ</b> Space（空中でもう一度で飛行）<br><b>飛行</b> F切替・Spaceで上昇・Cで下降<br>
-<b>1</b>木　<b>2</b>花　<b>3</b>お金　<b>4</b>ごはん（長押しで連続）<br>
+<b>1</b>木　<b>2</b>花　<b>3</b>お金　<b>4</b>ごはん（長押しで連続）<br><b>5</b>ひまわり畑（1タップで1000本）　<b>6</b>人を呼ぶ　<b>M</b>音楽ON/OFF<br>
 スマホ：左側ドラッグで移動、右側で視点、下のボタンで操作<br>
 🏊 海は泳げます（C:潜る / Space:飛び出す）<br>🗺 世界は無限に広がります<br><button id="go">はじめる</button></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -92,7 +92,7 @@ function updChunks(p,lim){const pcx=Math.floor(p.x/CS),pcz=Math.floor(p.z/CS);
 function bump(p){const cx=Math.floor(p.x/CS),cz=Math.floor(p.z/CS);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const ch=chunks.get((cx+a)+','+(cz+b));if(!ch)continue;
  for(const u of ch.b){const dx=p.x-u.x,dz=p.z-u.z,ox=u.w/2+.5-Math.abs(dx),oz=u.d/2+.5-Math.abs(dz);if(ox>0&&oz>0&&p.y<u.t){if(ox<oz){p.x+=Math.sign(dx)*ox;vel.x=0}else{p.z+=Math.sign(dz)*oz;vel.z=0}}}}}
 function spawn(){for(let r=0;r<4000;r+=60)for(let a=0;a<6.28;a+=.5){const x=cos(a)*r,z=sin(a)*r,q=Z(x,z);if(q.h>2&&q.h<12&&q.m<.1)return[x,z]}return[0,0]}
-function respawn(n,p){for(let t=0;t<10;t++){const a=R()*6.283,r=rr(70,280),x=p.x+cos(a)*r,z=p.z+sin(a)*r,q=Z(x,z);if(q.h<.5||q.h>30)continue;n.lock=0;n.x=x;if(q.cm>.97){n.lock=1;n.x=Math.round((x-3.5)/36)*36+3.5}n.z=z;n.tx=n.x;n.tz=z;n.happy=0;n.chase=0;n.jump=0;return}n.x=1e6;n.z=1e6}
+function respawn(n,p,r0,r1){r0=r0||70;r1=r1||280;for(let t=0;t<10;t++){const a=R()*6.283,r=rr(r0,r1),x=p.x+cos(a)*r,z=p.z+sin(a)*r,q=Z(x,z);if(q.h<.5||q.h>30)continue;n.lock=0;n.x=x;if(q.cm>.97){n.lock=1;n.x=Math.round((x-3.5)/36)*36+3.5}n.z=z;n.tx=n.x;n.tz=z;n.happy=0;n.chase=0;n.jump=0;return}n.x=1e6;n.z=1e6}
 // water
 const WL=-3.6;let wn,wm;
 {const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),im=x.createImageData(128,128),a=6.2832/128,h=(i,j)=>sin(i*a*3+cos(j*a*2)*2)+sin(j*a*4+sin(i*a*3)*2)+sin((i+j)*a*5)*.5;
@@ -123,6 +123,39 @@ const cg=mg([[blob(2.7,0,6.6,0),0xffffff,.12],[blob(2.1,1.9,5.6,.6),0xe6e6e6,.12
 const pet=[];for(let i=0;i<6;i++){const g=new THREE.SphereGeometry(.28,6,4);g.scale(1,.3,.55);g.translate(.3,0,0);g.rotateZ(.35);g.rotateY(i*1.047);g.translate(0,1.05,0);pet.push([g,0xffffff,.08])}
 const fg=mg([[cyl(.04,.05,1.05,5,0,.52,0),0x4a9a3a,.1],[new THREE.SphereGeometry(.13,6,4).translate(0,1.1,0),0xffc928,.05],[cyl(.01,.09,.5,4,.22,.4,0,-1),0x4a9a3a,.1]]),bg2=mg(pet);
 const T=mkS(tg,cg,1200),F=mkS(fg,bg2,2600),grow=[];
+// sunflowers
+const sfp=[];for(let i=0;i<10;i++){const g=new THREE.SphereGeometry(.2,4,2);g.scale(1.7,.2,.55);g.translate(.62,0,0);g.rotateY(i*.628);g.rotateX(1.2);g.translate(0,2.35,.18);sfp.push([g,0xffffff,.06])}
+const sfc=new THREE.CylinderGeometry(.38,.38,.14,10);sfc.rotateX(1.2);sfc.translate(0,2.35,.2);
+const Sf=mkS(mg([[cyl(.07,.1,2.3,5,0,1.15,0),0x4a8a2a,.1],[sfc,0x5a3a1a,.15],[new THREE.SphereGeometry(.3,4,2).scale(1.5,.12,.6).translate(.45,.9,0),0x3f8f2a,.1],[new THREE.SphereGeometry(.3,4,2).scale(1.5,.12,.6).translate(-.45,1.2,0),0x3f8f2a,.1]]),mg(sfp),2000);
+Sf.m.forEach(m=>m.castShadow=false);
+let lastM=0,lastP=0;
+function sunflowers(){const now=performance.now();if(!started||now-lastM<600)return;lastM=now;const p=P.position,a=P.rotation.y,cx=p.x+sin(a)*24,cz=p.z+cos(a)*24;let n=0;
+ for(let t=0;t<2400&&n<1000;t++){const r=26*Math.sqrt(R()),b=R()*6.283,x=cx+cos(b)*r,z=cz+sin(b)*r;if(H(x,z)<-1||Z(x,z).cm>.5)continue;
+  plant(Sf,x,z,rr(.7,1.1),C.setHSL(rr(.115,.145),.95,rr(.5,.58)).getHex());grow[grow.length-1].t=-(rr(0,.6)+r/26*.9);n++}
+ nf+=n;for(let i=0;i<14;i++)sp('🌻',p.x+rr(-2,2),p.y+rr(1,3),p.z+rr(-2,2),rr(-6,6),rr(5,12),rr(-6,6),1.6,2,12);cheer(40);sfx([72,76,79,84,88])}
+function addNPC(){const i=nm.length,pp=mkPerson(C.setHSL(R(),.55,.52).getHex(),PT[i%5],HR[Math.floor(R()*5)],SK[Math.floor(R()*4)]),g=pp.g;g.scale.setScalar(rr(.93,1.07));scene.add(g);
+ const n={g,pp,x:1e6,z:1e6,tx:1e6,tz:1e6,lock:0,happy:0,jump:0,chase:0,ht:0,i};nm.push(n);return n}
+function callPeople(){const now=performance.now();if(!started||now-lastP<600)return;lastP=now;
+ for(let i=0;i<12;i++){const n=nm.length<150?addNPC():nm[Math.floor(R()*nm.length)];respawn(n,P.position,5,22);n.chase=8;n.jump=2;if(n.x<1e5)sp('✨',n.x,H(n.x,n.z)+2.5,n.z,0,2,0,.9,2.5,0)}
+ sfx([76,79,83,79,84])}
+$('sunf').addEventListener('pointerdown',e=>{e.preventDefault();sunflowers()});$('ppl').addEventListener('pointerdown',e=>{e.preventDefault();callPeople()});$('mus').onclick=()=>toggleMusic();
+// music (generated with WebAudio, no audio files)
+let AC,MG,SG,NB,mOn=true,mst=0,mnx=0,mi=7;
+const RT=[60,67,69,65],CI=[[0,4,7],[0,4,7],[0,3,7],[0,4,7]],PEN=[0,2,4,7,9],mhz=n=>440*Math.pow(2,(n-69)/12),SD=.2586;
+function tone(f,t,d,ty,v,dst){const o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(dst||MG);o.start(t);o.stop(t+d+.05)}
+function nse(t,d,v,fr){const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();s.buffer=NB;f.type='highpass';f.frequency.value=fr;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(f);f.connect(g);g.connect(MG);s.start(t);s.stop(t+d)}
+function kick(t){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(40,t+.12);g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.0001,t+.2);o.connect(g);g.connect(MG);o.start(t);o.stop(t+.25)}
+function step8(s,t){const b=Math.floor(mst/8)%4,r=RT[b],c=CI[b];
+ if(s==0)c.forEach(i=>tone(mhz(r+i),t,2,'triangle',.05));
+ if(s==0||s==3||s==4||s==6)tone(mhz(r-24+(s==3?7:0)),t,.3,'sine',.22);
+ tone(mhz(r+12+c[s%3]+(s>4?12:0)),t,.25,'sine',.05);
+ if(R()<.72){mi=cl(mi+[-2,-1,0,1,1,2][Math.floor(R()*6)],2,12);tone(mhz(60+12*Math.floor(mi/5)+PEN[mi%5]),t,.38,'triangle',.08)}
+ if(s==0||s==4)kick(t);if(s%2)nse(t,.05,.12,7000);if(s==2||s==6)nse(t,.12,.14,1800)}
+function sched(){while(mnx<AC.currentTime+.35){step8(mst%8,mnx);mst++;mnx+=SD}}
+function initAudio(){if(AC)return;AC=new(window.AudioContext||window.webkitAudioContext)();MG=AC.createGain();MG.gain.value=.3;MG.connect(AC.destination);SG=AC.createGain();SG.gain.value=.35;SG.connect(AC.destination);
+ NB=AC.createBuffer(1,Math.floor(AC.sampleRate*.3),AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=R()*2-1;mnx=AC.currentTime+.1;setInterval(sched,100)}
+function toggleMusic(){if(!AC)return;mOn=!mOn;MG.gain.value=mOn?.3:0;$('mus').classList.toggle('on',mOn)}
+function sfx(a){if(!AC)return;const t=AC.currentTime;a.forEach((n,i)=>tone(mhz(n),t+i*.07,.4,'sine',.5,SG))}
 function place(g,k){D.position.set(g.x,g.y,g.z);D.rotation.y=g.i;D.scale.setScalar(g.s*k);D.updateMatrix();for(const m of g.S.m){m.setMatrixAt(g.i,D.matrix);m.instanceMatrix.needsUpdate=true}}
 function plant(S,x,z,s,col,now){const i=S.base+S.n++%(S.cap-S.base),m=S.m[1];m.setColorAt(i,C.set(col));m.instanceColor.needsUpdate=true;
  const g={S,i,x,y:H(x,z),z,s,t:0};if(now)place(g,1);else grow.push(g)}
@@ -169,13 +202,13 @@ const K={};let swim=false,yaw=0,pitch=.35,fly=false,ground=true,auto=false,dashT
 const keyName=e=>e.key===' '?'space':e.key.toLowerCase();
 function jump(){if(!started)return;if(!fly){if(ground||swim){vel.y=14;ground=false}else setFly(true)}}
 function setFly(v){fly=v;if(v&&ground){vel.y=9;ground=false}$('fly').classList.toggle('on',fly)}
-addEventListener('keydown',e=>{const k=keyName(e);if(['space','arrowup','arrowdown'].includes(k))e.preventDefault();if(!K[k]){K[k]=1;if(k=='space')jump();if(k=='f')setFly(!fly)}});
+addEventListener('keydown',e=>{const k=keyName(e);if(['space','arrowup','arrowdown'].includes(k))e.preventDefault();if(!K[k]){K[k]=1;if(k=='space')jump();if(k=='f')setFly(!fly);if(k=='5')sunflowers();if(k=='6')callPeople();if(k=='m')toggleMusic()}});
 addEventListener('keyup',e=>K[keyName(e)]=0);
 addEventListener('blur',()=>{for(const k in K)K[k]=0});
 document.querySelectorAll('[data-k]').forEach(b=>{const k=b.dataset.k,on=e=>{e.preventDefault();if(!K[k]){K[k]=1;if(k=='space')jump()}b.classList.add('on')},off=()=>{K[k]=0;b.classList.remove('on')};
  b.addEventListener('pointerdown',on);['pointerup','pointerleave','pointercancel'].forEach(t=>b.addEventListener(t,off))});
 $('fly').onclick=()=>setFly(!fly);$('dash').onclick=e=>{dashT=!dashT;e.currentTarget.classList.toggle('on',dashT)};$('auto').onclick=e=>{auto=!auto;e.currentTarget.classList.toggle('on',auto)};
-$('go').onclick=()=>{started=true;$('start').style.display='none'};
+$('go').onclick=()=>{started=true;$('start').style.display='none';initAudio();AC.resume()};
 cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);if(e.pointerType==='touch'&&e.clientX<innerWidth*.45&&!jo)jo={id:e.pointerId,x:e.clientX,y:e.clientY};else drag={id:e.pointerId,x:e.clientX,y:e.clientY}});
 cv.addEventListener('pointermove',e=>{if(jo&&e.pointerId===jo.id){joy.x=cl((e.clientX-jo.x)/45,-1,1);joy.y=cl((e.clientY-jo.y)/45,-1,1)}
  else if(drag&&e.pointerId===drag.id){yaw-=(e.clientX-drag.x)*.006;pitch=cl(pitch+(e.clientY-drag.y)*.005,-.7,1.25);drag.x=e.clientX;drag.y=e.clientY}});
@@ -188,8 +221,8 @@ function plantT(){const a=R()*6.28,r=rr(3,13),x=P.position.x+cos(a)*r,z=P.positi
  plant(T,x,z,rr(1.2,2),TC[Math.floor(R()*6)]);nt++;sp('✨',x,H(x,z)+4,z,0,3,0,.9,3,0)}
 function plantF(){for(let k=0;k<3;k++){const a=R()*6.28,r=rr(1,9),x=P.position.x+cos(a)*r,z=P.position.z+sin(a)*r;
  plant(F,x,z,rr(.9,1.7),C.setHSL(R(),.85,.68).getHex());nf++}}
-function giveMoney(){const p=P.position;for(let i=0;i<30;i++){const o=i%3?new THREE.Mesh(gc,FM.gold):new THREE.Mesh(gnote,FM.note);o.castShadow=true;spm(o,p.x+rr(-3,3),p.y+rr(2,5),p.z+rr(-3,3),rr(-9,9),rr(6,16),rr(-9,9),4.2,i%3?1.2:1.4,24)}money+=10000;cheer(30)}
-function giveFood(){const p=P.position;for(let i=0;i<14;i++)spm(food(i%5),p.x+rr(-2,2),p.y+rr(2,4),p.z+rr(-2,2),rr(-10,10),rr(4,12),rr(-10,10),4.5,1.4,20);cheer(30)}
+function giveMoney(){const p=P.position;for(let i=0;i<30;i++){const o=i%3?new THREE.Mesh(gc,FM.gold):new THREE.Mesh(gnote,FM.note);o.castShadow=true;spm(o,p.x+rr(-3,3),p.y+rr(2,5),p.z+rr(-3,3),rr(-9,9),rr(6,16),rr(-9,9),4.2,i%3?1.2:1.4,24)}money+=10000;cheer(30);sfx([84,88,91])}
+function giveFood(){const p=P.position;for(let i=0;i<14;i++)spm(food(i%5),p.x+rr(-2,2),p.y+rr(2,4),p.z+rr(-2,2),rr(-10,10),rr(4,12),rr(-10,10),4.5,1.4,20);cheer(30);sfx([79,83])}
 function hold(c,k,iv,fn,dt){if(c){tm[k]=(tm[k]||0)-dt;if(tm[k]<=0){tm[k]=iv;fn()}}else tm[k]=0}
 const ease=t=>{t-=1;return 1+2.70158*t*t*t+1.70158*t*t};
 function turn(a,b,k){let d=b-a;while(d>Math.PI)d-=6.283;while(d<-Math.PI)d+=6.283;return a+d*k}
@@ -226,7 +259,7 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/
  sky.position.copy(cam.position);{const gp=H(p.x,p.z);sun.position.set(p.x+120,gp+220,p.z+60);sun.target.position.set(p.x,gp,p.z);sun.target.updateMatrixWorld()}wn.offset.x+=dt*.012;wn.offset.y+=dt*.007;wm.position.set(Math.round(p.x/11.82)*11.82,WL,Math.round(p.z/11.82)*11.82);updChunks(p,2);{const u=cam.position.y<WL;scene.fog.color.setHex(u?0x14587f:SKY);scene.fog.near=u?1:130;scene.fog.far=u?75:470;scene.background=u?UWC:null;sky.visible=!u}
  camP.lerp(des,Math.min(1,dt*10));camP.y=Math.max(camP.y,H(camP.x,camP.z)+1.5);cam.position.copy(camP);cam.lookAt(tg2);
  // growth
- for(let i=grow.length-1;i>=0;i--){const g=grow[i];g.t+=dt*1.8;if(g.t>=1){place(g,1);grow.splice(i,1)}else place(g,ease(g.t))}
+ for(let i=grow.length-1;i>=0;i--){const g=grow[i];g.t+=dt*1.8;if(g.t>=1){place(g,1);grow.splice(i,1)}else place(g,g.t<0?0:ease(g.t))}
  // people
  for(const n of nm){if(Math.hypot(n.x-p.x,n.z-p.z)>330)respawn(n,p);n.chase-=dt;let tx=n.tx,tz=n.tz;if(n.chase>0){tx=p.x+sin(n.i*2.3)*5;tz=p.z+cos(n.i*2.3)*5}
   const ex=tx-n.x,ez=tz-n.z,d=Math.hypot(ex,ez);
