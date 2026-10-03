@@ -9,7 +9,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 #hud{position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 8px);display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
 #hud span{background:var(--pn);padding:5px 11px;border-radius:99px;font-weight:700;font-size:14px}
-#hud i{font-style:normal}
+#hud i{font-style:normal}#hud{right:150px}#sys{position:fixed;right:8px;top:calc(env(safe-area-inset-top,0px) + 8px);display:flex;flex-direction:column;gap:5px;align-items:flex-end}#sys button{font:inherit;font-weight:700;font-size:12px;padding:7px 10px;border:0;border-radius:12px;background:var(--pn);color:var(--tx);cursor:pointer}#sys button.on{background:var(--ac);color:#fff}#svs{font-size:11px;background:var(--pn);padding:2px 8px;border-radius:8px;max-width:150px;text-align:right}
 #bar{position:fixed;left:6px;right:6px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 #bar button{font:inherit;font-weight:700;font-size:15px;padding:11px 13px;border:0;border-radius:16px;background:var(--pn);color:var(--tx);touch-action:none;cursor:pointer}
 #bar button.on,#bar button:active{background:var(--ac);color:#fff}
@@ -21,6 +21,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 </style></head><body>
 <canvas id="cv"></canvas>
 <div id="hud"><span id="biome">草原</span><span>🌳 <i id="nt">0</i></span><span>🌸 <i id="nf">0</i></span><span>😊 <i id="nh">0</i><i id="np" hidden>0</i></span><span>💴 <i id="nm">0</i></span></div>
+<div id="sys"><button id="sv">💾 セーブ</button><button id="asv" class="on">🔁 オート: ON</button><button id="rst">🗑 はじめから</button><span id="svs"></span></div>
 <div id="bar">
 <button data-k="space">⤴ ジャンプ</button><button id="fly">🕊 飛ぶ</button><button id="dash">⚡ ダッシュ</button>
 <button data-k="1">🌳 木</button><button data-k="2">🌸 花</button><button data-k="3">💰 お金</button><button data-k="4">🍙 ごはん</button><button id="auto">✨ おまかせ</button><button id="sunf">🌻 ひまわり畑</button><button id="ppl">👥 人を呼ぶ</button><button id="mus" class="on">🎵 音楽</button></div>
@@ -30,7 +31,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 <b>ジャンプ</b> Space（空中でもう一度で飛行）<br><b>飛行</b> F切替・Spaceで上昇・Cで下降<br>
 <b>1</b>木　<b>2</b>花　<b>3</b>お金　<b>4</b>ごはん（長押しで連続）<br><b>5</b>ひまわり畑（1タップで1000本）　<b>6</b>人を呼ぶ　<b>M</b>音楽ON/OFF<br>
 スマホ：左側ドラッグで移動、右側で視点、下のボタンで操作<br>
-🏊 海は泳げます（C:潜る / Space:飛び出す）<br>🗺 世界は無限に広がります<br><button id="go">はじめる</button></div></div>
+🏊 海は泳げます（C:潜る / Space:飛び出す）<br>🗺 世界は無限に広がります<br>💾 自動で保存されます（右上でON/OFF・はじめから）<br><button id="go">はじめる</button></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id),R=Math.random,rr=(a,b)=>a+R()*(b-a),sin=Math.sin,cos=Math.cos;
@@ -60,7 +61,7 @@ const D=new THREE.Object3D(),C=new THREE.Color();
 // world chunks (infinite)
 const CS=100,CR=4,NS=24,chunks=new Map(),kept=new Map(),freeT=Array.from({length:3000},(_,i)=>i),freeF=Array.from({length:8000},(_,i)=>i),terrM=new THREE.MeshLambertMaterial({vertexColors:true}),UWC=new THREE.Color(0x14587f);let bMat;
 function deco(S,fr,x,z,s,col){const i=fr.pop();if(i===undefined)return -1;place({S,i,x,y:H(x,z),z,s},1);S.m[1].setColorAt(i,C.set(col));S.m[1].instanceColor.needsUpdate=true;return i}
-function mkChunk(cx,cz){const ox=cx*CS,oz=cz*CS,ch={m:[],tr:[],fl:[],sf:[],b:[]},g=new THREE.PlaneGeometry(CS,CS,NS,NS);g.rotateX(-Math.PI/2);g.translate(ox+CS/2,0,oz+CS/2);
+function mkChunk(cx,cz){const ox=cx*CS,oz=cz*CS,ch={cx,cz,m:[],tr:[],fl:[],sf:[],b:[]},g=new THREE.PlaneGeometry(CS,CS,NS,NS);g.rotateX(-Math.PI/2);g.translate(ox+CS/2,0,oz+CS/2);
  const p=g.attributes.position,col=new Float32Array(p.count*3);
  for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),q=Z(x,z),h=q.h;p.setY(i,h);
   if(h>140)C.set(0xffffff);else if(h>95)C.set(0xcfd3da);else if(h>55)C.set(0x8d8d99);else if(h>28&&q.m>.3)C.set(0x6f8a5a);
@@ -88,7 +89,7 @@ function dispChunk(ch){for(let q=grow.length-1;q>=0;q--)if(grow[q].ch===ch)grow.
 function updChunks(p,lim){const pcx=Math.floor(p.x/CS),pcz=Math.floor(p.z/CS);
  for(const[k,ch]of chunks)if(Math.abs(ch.cx-pcx)>CR+1||Math.abs(ch.cz-pcz)>CR+1){dispChunk(ch);chunks.delete(k)}
  const need=[];for(let dx=-CR;dx<=CR;dx++)for(let dz=-CR;dz<=CR;dz++){const k=(pcx+dx)+','+(pcz+dz);if(!chunks.has(k))need.push([dx*dx+dz*dz,pcx+dx,pcz+dz,k])}
- need.sort((a,b)=>a[0]-b[0]);for(const[,x,z,k]of need.slice(0,lim)){const ch=mkChunk(x,z);ch.cx=x;ch.cz=z;chunks.set(k,ch)}}
+ need.sort((a,b)=>a[0]-b[0]);for(const[,x,z,k]of need.slice(0,lim)){const ch=mkChunk(x,z);ch.cx=x;ch.cz=z;chunks.set(k,ch)}reloadEv()}
 function bump(p){const cx=Math.floor(p.x/CS),cz=Math.floor(p.z/CS);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const ch=chunks.get((cx+a)+','+(cz+b));if(!ch)continue;
  for(const u of ch.b){const dx=p.x-u.x,dz=p.z-u.z,ox=u.w/2+.5-Math.abs(dx),oz=u.d/2+.5-Math.abs(dz);if(ox>0&&oz>0&&p.y<u.t){if(ox<oz){p.x+=Math.sign(dx)*ox;vel.x=0}else{p.z+=Math.sign(dz)*oz;vel.z=0}}}}}
 function spawn(){for(let r=0;r<4000;r+=60)for(let a=0;a<6.28;a+=.5){const x=cos(a)*r,z=sin(a)*r,q=Z(x,z);if(q.h>2&&q.h<12&&q.m<.1)return[x,z]}return[0,0]}
@@ -124,12 +125,21 @@ const pet=[];for(let i=0;i<6;i++){const g=new THREE.SphereGeometry(.28,5,3);g.sc
 const fg=mg([[cyl(.04,.05,1.05,5,0,.52,0),0x4a9a3a,.1],[new THREE.SphereGeometry(.13,6,4).translate(0,1.1,0),0xffc928,.05],[cyl(.01,.09,.5,4,.22,.4,0,-1),0x4a9a3a,.1]]),bg2=mg(pet);
 const T=mkS(tg,cg,3000),F=mkS(fg,bg2,8000),grow=[];
 // sunflowers
-const sfp=[];for(let i=0;i<10;i++){const g=new THREE.SphereGeometry(.2,4,2);g.scale(1.7,.2,.55);g.translate(.62,0,0);g.rotateY(i*.628);g.rotateX(1.2);g.translate(0,2.35,.18);sfp.push([g,0xffffff,.06])}
-const sfc=new THREE.CylinderGeometry(.38,.38,.14,10);sfc.rotateX(1.2);sfc.translate(0,2.35,.2);
-const Sf=mkS(mg([[cyl(.07,.1,2.3,5,0,1.15,0),0x4a8a2a,.1],[sfc,0x5a3a1a,.15],[new THREE.SphereGeometry(.3,4,2).scale(1.5,.12,.6).translate(.45,.9,0),0x3f8f2a,.1],[new THREE.SphereGeometry(.3,4,2).scale(1.5,.12,.6).translate(-.45,1.2,0),0x3f8f2a,.1]]),mg(sfp),6000);
+const sfp=[];for(let i=0;i<8;i++){const g=new THREE.SphereGeometry(.2,4,2);g.scale(1.7,.2,.55);g.translate(.62,0,0);g.rotateY(i*.785);g.rotateX(1.2);g.translate(0,2.35,.18);sfp.push([g,0xffffff,.06])}
+const sfc=new THREE.CylinderGeometry(.38,.38,.14,8);sfc.rotateX(1.2);sfc.translate(0,2.35,.2);
+const Sf=mkS(mg([[cyl(.07,.1,2.3,5,0,1.15,0),0x4a8a2a,.1],[sfc,0x5a3a1a,.15],[new THREE.SphereGeometry(.3,4,2).scale(1.5,.12,.6).translate(.45,.9,0),0x3f8f2a,.1],[new THREE.SphereGeometry(.3,4,2).scale(1.5,.12,.6).translate(-.45,1.2,0),0x3f8f2a,.1]]),mg(sfp),10000);
 Sf.m.forEach(m=>m.castShadow=false);
-const freeS=Array.from({length:6000},(_,i)=>i);
-function put(ch,k,x,z,s,col,delay){const KD={t:[T,freeT,'tr'],f:[F,freeF,'fl'],s:[Sf,freeS,'sf']},[S,fr,l]=KD[k],i=fr.pop();if(i===undefined)return;
+const freeS=Array.from({length:10000},(_,i)=>i);
+const kd=k=>({t:[T,freeT,'tr'],f:[F,freeF,'fl'],s:[Sf,freeS,'sf']})[k];
+function getSlot(ch,k){const[S,fr,l]=kd(k);let i=fr.pop();if(i!==undefined)return i;
+ const pc=Math.floor(P.position.x/CS),pz=Math.floor(P.position.z/CS);let best=null,bd=-1;
+ for(const c of chunks.values()){if(c===ch||!c[l].length)continue;const d=Math.max(Math.abs(c.cx-pc),Math.abs(c.cz-pz));if(d>bd){bd=d;best=c}}
+ if(best&&bd>=Math.max(Math.abs(ch.cx-pc),Math.abs(ch.cz-pz))){for(let q=grow.length-1;q>=0;q--)if(grow[q].ch===best&&grow[q].S===S)grow.splice(q,1);
+  for(const j of best[l]){place({S,i:j,x:0,y:0,z:0,s:0},1);fr.push(j)}best[l]=[];(best.ev=best.ev||{})[k]=1;return fr.pop()}
+ if(ch[l].length){const j=ch[l].shift();for(let q=grow.length-1;q>=0;q--)if(grow[q].S===S&&grow[q].i===j)grow.splice(q,1);return j}return undefined}
+function reloadEv(){for(const c of chunks.values())if(c.ev)for(const k in c.ev){const e=kept.get(c.cx+','+c.cz),fr=kd(k)[1];if(!e||!e[k].length){delete c.ev[k];continue}
+ if(fr.length>=e[k].length){delete c.ev[k];for(const[x,z,s,col]of e[k])put(c,k,x,z,s,col,null)}}}
+function put(ch,k,x,z,s,col,delay){const[S,,l]=kd(k),i=getSlot(ch,k);if(i===undefined)return;
  S.m[1].setColorAt(i,C.set(col));S.m[1].instanceColor.needsUpdate=true;const g={S,i,x,y:H(x,z),z,s,t:delay,ch};ch[l].push(i);if(delay===null)place(g,1);else grow.push(g)}
 function keep(k,x,z,s,col,delay){const key=Math.floor(x/CS)+','+Math.floor(z/CS);let e=kept.get(key);if(!e){e={t:[],f:[],s:[]};kept.set(key,e)}e[k].push([x,z,s,col]);dirty=1;const ch=chunks.get(key);if(ch)put(ch,k,x,z,s,col,delay)}
 let lastM=0,lastP=0;
@@ -281,12 +291,20 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/
   q.s.scale.setScalar(q.size*Math.min(1,q.life/.5))}
  hudT-=dt;if(hudT<=0){hudT=.15;$('nt').textContent=nt;$('nf').textContent=nf;$('nh').textContent=hc;$('nm').textContent=money.toLocaleString('ja-JP');$('biome').textContent=bio(p.x,p.z)+(fly?'　🕊':'')}
  ren.render(scene,cam)}
-let dirty=0;
-try{const o=JSON.parse(localStorage.getItem('hsr_kept')||'{}');for(const k in o){kept.set(k,{t:o[k][0],f:o[k][1],s:o[k][2]});nt+=o[k][0].length;nf+=o[k][1].length+o[k][2].length}
- const sv=JSON.parse(localStorage.getItem('hsr_pos')||'null');if(sv)P.position.set(sv[0],Math.max(H(sv[0],sv[1]),WL-.35),sv[1])}catch(e){}
+let dirty=0,autoSave=true,loaded=0;
+try{autoSave=localStorage.getItem('hsr_auto')!=='0';const o=JSON.parse(localStorage.getItem('hsr_kept')||'{}');for(const k in o){kept.set(k,{t:o[k][0],f:o[k][1],s:o[k][2]});nt+=o[k][0].length;nf+=o[k][1].length+o[k][2].length;loaded=1}
+ const sv=JSON.parse(localStorage.getItem('hsr_pos')||'null');if(sv)P.position.set(sv[0],Math.max(H(sv[0],sv[1]),WL-.35),sv[1]);const st=JSON.parse(localStorage.getItem('hsr_stat')||'null');if(st){hc=st[0];money=st[1]}}catch(e){}
+const stamp=ok=>{$('svs').textContent=ok?'💾 保存 '+new Date().toLocaleTimeString('ja-JP'):'⚠ 保存できません（この環境では不可）'};
+function savePos(){try{localStorage.setItem('hsr_pos',JSON.stringify([P.position.x,P.position.z]));localStorage.setItem('hsr_stat',JSON.stringify([hc,money]))}catch(e){}}
 function saveAll(){try{const o={};for(const[k,e]of kept)o[k]=[e.t,e.f,e.s].map(a=>a.map(v=>[Math.round(v[0]*10)/10,Math.round(v[1]*10)/10,Math.round(v[2]*100)/100,v[3]]));
- localStorage.setItem('hsr_kept',JSON.stringify(o));localStorage.setItem('hsr_pos',JSON.stringify([P.position.x,P.position.z]));dirty=0}catch(e){}}
-setInterval(()=>{if(dirty)saveAll()},2500);setInterval(()=>{try{localStorage.setItem('hsr_pos',JSON.stringify([P.position.x,P.position.z]))}catch(e){}},3000);
-addEventListener('pagehide',saveAll);document.addEventListener('visibilitychange',()=>{if(document.hidden)saveAll()});
+ localStorage.setItem('hsr_kept',JSON.stringify(o));savePos();dirty=0;stamp(1)}catch(e){stamp(0)}}
+const lab=()=>{$('asv').textContent='🔁 オート: '+(autoSave?'ON':'OFF');$('asv').classList.toggle('on',autoSave)};lab();if(loaded)$('svs').textContent='💾 前回のデータを読み込みました';
+$('sv').onclick=saveAll;$('asv').onclick=()=>{autoSave=!autoSave;try{localStorage.setItem('hsr_auto',autoSave?'1':'0')}catch(e){}lab();if(autoSave)saveAll()};
+setInterval(()=>{if(!autoSave||!started)return;if(dirty)saveAll();else savePos()},2500);
+addEventListener('pagehide',()=>{if(autoSave)saveAll()});document.addEventListener('visibilitychange',()=>{if(document.hidden&&autoSave)saveAll()});
+function resetWorld(){kept.clear();grow.length=0;for(const ch of chunks.values())dispChunk(ch);chunks.clear();nt=nf=hc=money=0;nm.forEach(n=>{n.happy=0;n.chase=0;n.jump=0});
+ try{['hsr_kept','hsr_pos','hsr_stat'].forEach(k=>localStorage.removeItem(k))}catch(e){}
+ const q=spawn();P.position.set(q[0],H(q[0],q[1]),q[1]);vel.set(0,0,0);setFly(false);dirty=0;updChunks(P.position,999);$('svs').textContent='✨ はじめからやり直しました'}
+let rcf=0;$('rst').onclick=()=>{if(!rcf){rcf=setTimeout(()=>{rcf=0;$('rst').textContent='🗑 はじめから'},3000);$('rst').textContent='⚠ もう一度押すと消去';return}clearTimeout(rcf);rcf=0;$('rst').textContent='🗑 はじめから';resetWorld()};
 updChunks(P.position,999);requestAnimationFrame(loop);
 </script></body></html>
